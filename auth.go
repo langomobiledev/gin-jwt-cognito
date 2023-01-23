@@ -1,19 +1,21 @@
 package jwt
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	jwtgo "github.com/golang-jwt/jwt/v4"
 	"log"
 	"math/big"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	jwtgo "github.com/golang-jwt/jwt/v4"
 )
 
 var (
@@ -30,7 +32,10 @@ const (
 	AuthenticateHeader = "WWW-Authenticate"
 
 	// AuthorizationHeader the auth header that gets passed to all services
-	AuthorizationHeader = "Authentication"
+	AuthorizationHeader = "Authorization"
+
+	// Bearer the type of token expected
+	BearerSchema = "Bearer "
 
 	// Forward slash character
 	ForwardSlash = "/"
@@ -52,6 +57,9 @@ type AuthMiddleware struct {
 
 	// TokenLookup the header name of the token
 	TokenLookup string
+
+	// IsBearerSchema when the authorization token use a Bearer schema
+	IsBearerSchema bool
 
 	// TimeFunc
 	TimeFunc func() time.Time
@@ -158,7 +166,21 @@ func (mw *AuthMiddleware) jwtFromHeader(c *gin.Context, key string) (string, err
 	if authHeader == "" {
 		return "", AuthHeaderEmptyError
 	}
+
+	if mw.IsBearerSchema {
+		authHeader = mw.jwtBearer([]byte(authHeader))
+	}
+
 	return authHeader, nil
+}
+
+func (mw *AuthMiddleware) jwtBearer(strToken []byte) string {
+	bearer := []byte(BearerSchema)
+	if bytes.HasPrefix(strToken, bearer) {
+		jwt := string(strToken[len(bearer):])
+		return jwt
+	}
+	return string(strToken)
 }
 
 func (mw *AuthMiddleware) unauthorized(c *gin.Context, code int, message string) {
