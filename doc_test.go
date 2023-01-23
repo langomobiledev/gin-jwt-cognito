@@ -1,8 +1,8 @@
 package jwt_test
 
 import (
-	jwt "github.com/akhettar/gin-jwt-cognito"
 	"github.com/gin-gonic/gin"
+	jwt "github.com/langomobiledev/gin-jwt-cognito"
 )
 
 func ExampleAuthMiddleware() {
