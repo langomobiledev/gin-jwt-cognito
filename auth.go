@@ -34,17 +34,11 @@ const (
 	// AuthorizationHeader the auth header that gets passed to all services
 	AuthorizationHeader = "Authorization"
 
-	// Bearer the type of token expected
+	// BearerSchema the type of token expected
 	BearerSchema = "Bearer "
-
-	// Forward slash character
-	ForwardSlash = "/"
 
 	// HEADER used by the JWT middle ware
 	HEADER = "header"
-
-	// IssuerFieldName the issuer field name
-	IssuerFieldName = "iss"
 )
 
 // AuthMiddleware middleware
@@ -60,6 +54,9 @@ type AuthMiddleware struct {
 
 	// IsBearerSchema when the authorization token use a Bearer schema
 	IsBearerSchema bool
+
+	// DebugLog extra logging
+	DebugLog bool
 
 	// TimeFunc
 	TimeFunc func() time.Time
@@ -267,7 +264,7 @@ func (mw *AuthMiddleware) parse(tokenStr string) (*jwtgo.Token, error) {
 	}
 	issStr := iss.(string)
 	if strings.Contains(issStr, "cognito-idp") {
-		err = validateAWSJwtClaims(claims, mw.Region, mw.UserPoolID)
+		err = validateAWSJwtClaims(claims, mw.Region, mw.UserPoolID, mw.DebugLog)
 		if err != nil {
 			return token, err
 		}
@@ -280,7 +277,7 @@ func (mw *AuthMiddleware) parse(tokenStr string) (*jwtgo.Token, error) {
 }
 
 // validateAWSJwtClaims validates AWS Cognito User Pool JWT
-func validateAWSJwtClaims(claims jwtgo.MapClaims, region, userPoolID string) error {
+func validateAWSJwtClaims(claims jwtgo.MapClaims, region, userPoolID string, debug bool) error {
 	var err error
 	// 3. Check the iss claim. It should match your user pool.
 	issShoudBe := fmt.Sprintf("https://cognito-idp.%v.amazonaws.com/%v", region, userPoolID)
@@ -308,7 +305,7 @@ func validateAWSJwtClaims(claims jwtgo.MapClaims, region, userPoolID string) err
 	}
 
 	// 7. Check the exp claim and make sure the token is not expired.
-	err = validateExpired(claims)
+	err = validateExpired(claims, debug)
 	if err != nil {
 		return err
 	}
@@ -329,12 +326,15 @@ func validateClaimItem(key string, keyShouldBe []string, claims jwtgo.MapClaims)
 	return fmt.Errorf("%v does not match any of valid values: %v", key, keyShouldBe)
 }
 
-func validateExpired(claims jwtgo.MapClaims) error {
+func validateExpired(claims jwtgo.MapClaims, debug bool) error {
 	if tokenExp, ok := claims["exp"]; ok {
 		if exp, ok := tokenExp.(float64); ok {
 			now := time.Now().Unix()
-			fmt.Printf("current unixtime : %v\n", now)
-			fmt.Printf("expire unixtime  : %v\n", int64(exp))
+			if debug {
+				fmt.Printf("current unixtime : %v\n", now)
+				fmt.Printf("expire unixtime  : %v\n", int64(exp))
+			}
+
 			if int64(exp) > now {
 				return nil
 			}
