@@ -277,7 +277,7 @@ func (mw *AuthMiddleware) parse(tokenStr string) (*jwtgo.Token, error) {
 }
 
 // validateAWSJwtClaims validates AWS Cognito User Pool JWT
-func validateAWSJwtClaims(claims jwtgo.MapClaims, region, userPoolID string, debug bool) error {
+func validateAWSJwtClaims(claims jwtgo.MapClaims, region, userPoolID string, debugLog bool) error {
 	var err error
 	// 3. Check the iss claim. It should match your user pool.
 	issShoudBe := fmt.Sprintf("https://cognito-idp.%v.amazonaws.com/%v", region, userPoolID)
@@ -305,7 +305,7 @@ func validateAWSJwtClaims(claims jwtgo.MapClaims, region, userPoolID string, deb
 	}
 
 	// 7. Check the exp claim and make sure the token is not expired.
-	err = validateExpired(claims, debug)
+	err = validateExpired(claims, debugLog)
 	if err != nil {
 		return err
 	}
@@ -326,11 +326,11 @@ func validateClaimItem(key string, keyShouldBe []string, claims jwtgo.MapClaims)
 	return fmt.Errorf("%v does not match any of valid values: %v", key, keyShouldBe)
 }
 
-func validateExpired(claims jwtgo.MapClaims, debug bool) error {
+func validateExpired(claims jwtgo.MapClaims, debugLog bool) error {
 	if tokenExp, ok := claims["exp"]; ok {
 		if exp, ok := tokenExp.(float64); ok {
 			now := time.Now().Unix()
-			if debug {
+			if debugLog {
 				fmt.Printf("current unixtime : %v\n", now)
 				fmt.Printf("expire unixtime  : %v\n", int64(exp))
 			}
