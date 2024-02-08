@@ -1,0 +1,18 @@
+name: gin-jwt-cognito
+id: ari:cloud:compass:32a38987-4e5f-46d0-b1e9-cccee2b893c8:component/ec857538-4f74-4386-9c58-a2184b23e9b5/3f1920df-b8db-475c-9a39-e7e0ab924777
+description: Gin Cognito JWT Authentication Middleware
+configVersion: 1
+typeId: LIBRARY
+ownerId: ari:cloud:identity::team/67ff9772-cb60-4270-b7e9-24ea6f39c279
+fields:
+  tier: 4
+links:
+  - name: null
+    type: REPOSITORY
+    url: https://github.com/langomobiledev/gin-jwt-cognito
+relationships:
+  DEPENDS_ON: []
+labels:
+  - language:go
+  - source:github
+customFields: null
