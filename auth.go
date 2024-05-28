@@ -202,14 +202,7 @@ func (mw *AuthMiddleware) MiddlewareFunc() gin.HandlerFunc {
 }
 
 // AuthJWTMiddleware create an instance of the middle ware function
-func AuthJWTMiddleware(iss, userPoolID, region string) (*AuthMiddleware, error) {
-
-	// Download the public json web key for the given user pool ID at the start of the plugin
-	jwk, err := getJWK(fmt.Sprintf("https://cognito-idp.%v.amazonaws.com/%v/.well-known/jwks.json", region, userPoolID))
-	if err != nil {
-		return nil, err
-	}
-
+func AuthJWTMiddleware(iss, userPoolID, region string, jwk map[string]JWKKey) (*AuthMiddleware, error) {
 	authMiddleware := &AuthMiddleware{
 		Timeout: time.Hour,
 
@@ -367,7 +360,7 @@ func convertKey(rawE, rawN string) *rsa.PublicKey {
 }
 
 // Download the json web public key for the given user pool id
-func getJWK(jwkURL string) (map[string]JWKKey, error) {
+func GetJWK(jwkURL string) (map[string]JWKKey, error) {
 	Info.Printf("Downloading the jwk from the given url %s", jwkURL)
 	jwk := &JWK{}
 
