@@ -15,15 +15,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	jwtgo "github.com/golang-jwt/jwt/v4"
+	jwtgo "github.com/golang-jwt/jwt/v5"
 )
 
 var (
-	// AuthHeaderEmptyError thrown when an empty Authorization header is received
-	AuthHeaderEmptyError = errors.New("auth header empty")
+	// ErrorAuthHeaderEmpty thrown when an empty Authorization header is received
+	ErrorAuthHeaderEmpty = errors.New("auth header empty")
 
-	// InvalidAuthHeaderError thrown when an invalid Authorization header is received
-	InvalidAuthHeaderError = errors.New("invalid auth header")
+	// ErrorInvalidAuthHeader thrown when an invalid Authorization header is received
+	ErrorInvalidAuthHeader = errors.New("invalid auth header")
 )
 
 const (
@@ -98,7 +98,7 @@ type JWKKey struct {
 // AuthError auth error response
 type AuthError struct {
 	Message string `json:"message"`
-	Code    int    `json:code`
+	Code    int    `json:"code"`
 }
 
 // MiddlewareInit initialize jwt configs.
@@ -161,7 +161,7 @@ func (mw *AuthMiddleware) jwtFromHeader(c *gin.Context, key string) (string, err
 	authHeader := c.Request.Header.Get(key)
 
 	if authHeader == "" {
-		return "", AuthHeaderEmptyError
+		return "", ErrorAuthHeaderEmpty
 	}
 
 	if mw.IsBearerSchema {
@@ -188,7 +188,6 @@ func (mw *AuthMiddleware) unauthorized(c *gin.Context, code int, message string)
 	c.Abort()
 
 	mw.Unauthorized(c, code, message)
-	return
 }
 
 // MiddlewareFunc implements the Middleware interface.
@@ -197,7 +196,6 @@ func (mw *AuthMiddleware) MiddlewareFunc() gin.HandlerFunc {
 	mw.MiddlewareInit()
 	return func(c *gin.Context) {
 		mw.middlewareImpl(c)
-		return
 	}
 }
 
