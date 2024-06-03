@@ -11,7 +11,8 @@ func ExampleAuthMiddleware() {
 	router := gin.Default()
 
 	// Create Cognito JWT auth middleware and set it  in all authenticated endpoints
-	mw, err := jwt.AuthJWTMiddleware("<some_iss>", "<some_userpool_id>", "region")
+	var jwk map[string]jwt.JWKKey
+	mw, err := jwt.AuthJWTMiddleware("<some_iss>", "<some_userpool_id>", "region", jwk)
 	if err != nil {
 		panic(err)
 	}
