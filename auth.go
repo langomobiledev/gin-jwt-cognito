@@ -67,8 +67,8 @@ type AuthMiddleware struct {
 	// to verify issuer
 	VerifyIssuer bool
 
-	// The issuer
-	Iss string
+	// Issuers contains a list of valid token issuers
+	Issuers []string
 
 	// JWK public JSON Web Key (JWK) for your user pool
 	JWK map[string]JWKKey
@@ -198,7 +198,7 @@ func (mw *AuthMiddleware) MiddlewareFunc() gin.HandlerFunc {
 }
 
 // AuthJWTMiddleware create an instance of the middle ware function
-func AuthJWTMiddleware(iss string, jwk map[string]JWKKey, opts ...Option) (*AuthMiddleware, error) {
+func AuthJWTMiddleware(jwk map[string]JWKKey, opts ...Option) (*AuthMiddleware, error) {
 	authMiddleware := &AuthMiddleware{
 		Timeout: time.Hour,
 
@@ -210,11 +210,14 @@ func AuthJWTMiddleware(iss string, jwk map[string]JWKKey, opts ...Option) (*Auth
 		TokenLookup: "header:" + AuthorizationHeader,
 		TimeFunc:    time.Now,
 		JWK:         jwk,
-		Iss:         iss,
 	}
 
 	for _, opt := range opts {
 		opt(authMiddleware)
+	}
+
+	if len(authMiddleware.Issuers) == 0 {
+		return nil, fmt.Errorf("issuers list is required but was empty")
 	}
 
 	return authMiddleware, nil
@@ -228,6 +231,14 @@ type Option func(query *AuthMiddleware)
 func WithSkipTokenUseValidation(skipTokenUseValidation bool) Option {
 	return func(query *AuthMiddleware) {
 		query.skipTokenUseValidation = skipTokenUseValidation
+	}
+}
+
+// WithIssuers returns an Option that sets the Issuers field in AuthMiddleware.
+// This option allows specifying a list of valid token issuers.
+func WithIssuers(issuers ...string) Option {
+	return func(mw *AuthMiddleware) {
+		mw.Issuers = issuers
 	}
 }
 
@@ -285,7 +296,7 @@ func (mw *AuthMiddleware) parse(tokenStr string) (*jwtgo.Token, error) {
 func (mw *AuthMiddleware) validateJwtClaims(claims jwtgo.MapClaims) error {
 	var err error
 	// 3. Check the iss claim. It should match your user pool.
-	err = validateClaimItem("iss", []string{mw.Iss}, claims)
+	err = validateClaimItem("iss", mw.Issuers, claims)
 	if err != nil {
 		Error.Printf("Failed to validate the jwt token claims %v", err)
 		return err
